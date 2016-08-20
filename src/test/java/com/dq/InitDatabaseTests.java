@@ -1,7 +1,10 @@
 package com.dq;
 
-;import com.dq.dao.UserDAO;
+;import com.dq.dao.NewsDAO;
+import com.dq.dao.UserDAO;
+import com.dq.model.News;
 import com.dq.model.User;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,7 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -27,6 +31,9 @@ public class InitDatabaseTests {
     @Autowired
     UserDAO userDAO;
 
+    @Autowired
+    NewsDAO newsDAO;
+
     @Test
     public void initData(){
         //新增一个用户，设置名字、密码等字段
@@ -36,6 +43,29 @@ public class InitDatabaseTests {
         user.setSalt(UUID.randomUUID().toString().substring(0,5));
         user.setHeadUrl("http://images.nowcoder.com/head/%dt.png");
         userDAO.addUser(user);
+
+        user.setPassword("123");
+        userDAO.updatePassword(user);
+        Assert.assertEquals("123",userDAO.selectById(1).getPassword());
+
+        user.setName("dd");
+        userDAO.updateName(user);
+        Assert.assertEquals("dd",userDAO.selectById(1).getName());
+
+        userDAO.deleteById(1);
+        Assert.assertNull(userDAO.selectById(1));
+
+        News news = new News();
+        news.setImage("http://images.dd.com/head/%dt.png");
+        news.setLink("http://www.nowcoder.com/%d.html");
+        news.setCommentCount(6);
+        Date date = new Date();
+        date.setTime(date.getTime()+1000*3600*5);
+        news.setCreatedDate(date);
+        news.setTitle("hello dq");
+        news.setUserId(5);
+
+        newsDAO.addNews(news);
 
     }
 }
