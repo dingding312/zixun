@@ -52,8 +52,8 @@ public class InitDatabaseTests {
         userDAO.updateName(user);
         Assert.assertEquals("dd",userDAO.selectById(1).getName());
 
-        userDAO.deleteById(1);
-        Assert.assertNull(userDAO.selectById(1));
+        //userDAO.deleteById(1);
+        //Assert.assertNull(userDAO.selectById(1));
 
         News news = new News();
         news.setImage("http://images.dd.com/head/%dt.png");
