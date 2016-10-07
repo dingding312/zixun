@@ -1,0 +1,28 @@
+<html>
+<body>
+    #if ($user)
+        Hello $!{user.name}
+    #else
+    登陆1
+    #end
+    <br>
+    <br>
+
+#set($cur_date = '')
+   #foreach($vo in $vos)
+   #if($cur_date != $date.format('yyyy-MM-dd', $vo.news.createdDate))
+   #set($cur_date = $date.format('yyyy-MM-dd', $vo.news.createdDate))
+        $date.format('yyyy-MM-dd', $vo.news.createdDate)
+   #end
+    $!{vo.news.title}
+    $!{vo.news.commentCount}
+    $!{vo.user.name}
+    <br>
+    <br>
+
+       #if ($foreach.count == $vos.size())
+       #end
+    #end
+
+</body>
+</html>

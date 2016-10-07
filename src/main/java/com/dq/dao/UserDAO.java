@@ -37,6 +37,10 @@ public interface UserDAO {
     @Update({"update ", TABLE_NAME, "set name = #{name} where id = #{id}"})
     void updateName(User user);
 
+    @Update({"update ", TABLE_NAME, "set head_url = #{headUrl} where id = #{id}"})
+    void updateHeadUrl(@Param("headUrl") String headUrl,
+                    @Param("id") int id);
+
     @Delete({"delete from ", TABLE_NAME, "where id = #{id}"})
     void deleteById(int id);
 

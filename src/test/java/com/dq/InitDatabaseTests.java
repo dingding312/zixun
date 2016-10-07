@@ -1,7 +1,9 @@
 package com.dq;
 
-;import com.dq.dao.NewsDAO;
+;import com.dq.dao.LoginTicketDAO;
+import com.dq.dao.NewsDAO;
 import com.dq.dao.UserDAO;
+import com.dq.model.LoginTicket;
 import com.dq.model.News;
 import com.dq.model.User;
 import org.junit.Assert;
@@ -13,6 +15,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.Date;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -34,38 +37,52 @@ public class InitDatabaseTests {
     @Autowired
     NewsDAO newsDAO;
 
+    @Autowired
+    LoginTicketDAO loginTicketDAO;
+
     @Test
     public void initData(){
-        //新增一个用户，设置名字、密码等字段
-        User user = new User();
-        user.setName("dq");
-        user.setPassword("123456");
-        user.setSalt(UUID.randomUUID().toString().substring(0,5));
-        user.setHeadUrl("http://images.nowcoder.com/head/%dt.png");
-        userDAO.addUser(user);
+        Random random = new Random();
+        for (int i = 0; i < 11; ++i) {
+            User user = new User();
+            user.setHeadUrl(String.format("http://images.nowcoder.com/head/%dt.png", random.nextInt(1000)));
+            user.setName(String.format("USER%d", i));
+            user.setPassword("");
+            user.setSalt("");
+            userDAO.addUser(user);
 
-        user.setPassword("123");
-        userDAO.updatePassword(user);
-        Assert.assertEquals("123",userDAO.selectById(1).getPassword());
+            News news = new News();
+            news.setCommentCount(i);
+            Date date = new Date();
+            date.setTime(date.getTime() + 1000*3600*5*i);
+            news.setCreatedDate(date);
+            news.setImage(String.format("http://images.nowcoder.com/head/%dm.png", random.nextInt(1000)));
+            news.setLikeCount(i+1);
+            news.setUserId(i+1);
+            news.setTitle(String.format("TITLE{%d}", i));
+            news.setLink(String.format("http://www.nowcoder.com/%d.html", i));
+            newsDAO.addNews(news);
 
-        user.setName("dd");
-        userDAO.updateName(user);
-        Assert.assertEquals("dd",userDAO.selectById(1).getName());
+            user.setPassword("newpassword");
+            userDAO.updatePassword(user);
 
-        //userDAO.deleteById(1);
-        //Assert.assertNull(userDAO.selectById(1));
+            LoginTicket ticket = new LoginTicket();
+            ticket.setStatus(0);
+            ticket.setUserId(i+1);
+            ticket.setExpired(date);
+            ticket.setTicket(String.format("TICKET%d", i+1));
+            loginTicketDAO.addTicket(ticket);
+            loginTicketDAO.updateStatus(2, ticket.getTicket());
 
-        News news = new News();
-        news.setImage("http://images.dd.com/head/%dt.png");
-        news.setLink("http://www.nowcoder.com/%d.html");
-        news.setCommentCount(6);
-        Date date = new Date();
-        date.setTime(date.getTime()+1000*3600*5);
-        news.setCreatedDate(date);
-        news.setTitle("hello dq");
-        news.setUserId(5);
+        }
 
-        newsDAO.addNews(news);
+        Assert.assertEquals("newpassword", userDAO.selectById(1).getPassword());
+        userDAO.deleteById(1);
+        Assert.assertNull(userDAO.selectById(1));
 
+        Assert.assertEquals(1, loginTicketDAO.selectByTicket("TICKET1").getUserId());
+        Assert.assertEquals(2, loginTicketDAO.selectByTicket("TICKET1").getStatus());
     }
+
 }
+

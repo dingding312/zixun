@@ -1,17 +1,17 @@
 package com.dq.service;
 
+import com.dq.dao.LoginTicketDAO;
 import com.dq.dao.UserDAO;
+import com.dq.model.LoginTicket;
 import com.dq.model.User;
 import com.dq.util.ZixunUtil;
-import org.apache.commons.collections.iterators.ObjectArrayIterator;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -21,6 +21,9 @@ import java.util.UUID;
 public class UserService {
     @Autowired
     UserDAO userDAO;
+
+    @Autowired
+    LoginTicketDAO loginTicketDAO;
 
     public User getUser(int id){
         return userDAO.selectById(id);
@@ -94,7 +97,63 @@ public class UserService {
         user.setPassword(ZixunUtil.MD5(password + user.getSalt()));
         user.setHeadUrl("");
         userDAO.addUser(user);
+
+        //一般情况下，用户注册好了，就直接下发一个ticket，变成登录状态
+        String ticket = addLoginTicket(user.getId());
+        map.put("ticket", ticket);
+
         return map;
     }
 
+    //登陆
+    public Map<String, Object> login(String username, String password){
+        Map<String, Object> map = new HashMap<String, Object>();
+        if(StringUtils.isBlank(username)){
+            map.put("msgusername", "用户名不能为空");
+            return map;
+        }
+        if(StringUtils.isBlank(password)){
+            map.put("msgpassword", "密码不能为空");
+            return map;
+        }
+
+        //输入了用户名和密码后，判断用户名是否存在
+        User user = userDAO.selectByName(username);
+        if(user == null){
+            map.put("msgusername", "用户名不存在");
+            return map;
+        }
+
+        //用户存在，判断密码是否正确
+        if(!user.getPassword().equals(ZixunUtil.MD5(password + user.getSalt()))){
+            map.put("msgpassword", "密码不正确");
+            return map;
+        }
+
+        //下发ticket
+        String ticket = addLoginTicket(user.getId());
+        map.put("ticket", ticket);
+        return map;
+    }
+
+    //设计ticket，跟插入的方法是一样的
+    public String addLoginTicket(int id) {
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(id);
+        loginTicket.setTicket(UUID.randomUUID().toString().replaceAll("-", ""));
+
+        //设置过期时间
+        Date date = new Date();
+        date.setTime(date.getTime() + 1000*3600*24);
+        loginTicket.setExpired(date);
+
+        //设置有效状态
+        loginTicket.setStatus(0);
+        loginTicketDAO.addTicket(loginTicket);
+        return loginTicket.getTicket();
+    }
+
+    public void logout(String ticket){
+        loginTicketDAO.updateStatus(1, ticket);
+    }
 }
